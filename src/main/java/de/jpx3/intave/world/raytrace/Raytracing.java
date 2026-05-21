@@ -180,6 +180,11 @@ public final class Raytracing {
       for (boolean fastMath : PESSIMISTIC_BOOLEAN_ORDER) {
         if (lastReach < attackReachDistance)
           break;
+
+        if (lastEyeVector == null) {
+          lastEyeVector = eyeVector;
+        }
+
         NativeVector interpolatedLookVec = wrappedVectorForRotation(pitch, prevYaw, fastMath);
         NativeVector lookVector = eyeVector.addVector(
           interpolatedLookVec.xCoord * blockReachDistance,
