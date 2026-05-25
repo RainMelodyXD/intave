@@ -876,10 +876,8 @@ public final class MovementMetadata implements SimulationEnvironment {
     if (sneaking && !clientData.sprintWhenSneaking()) {
       sprintingAllowed = false;
     }
-    if (inventoryData.inventoryOpen()) {
-      sprintingAllowed = false;
-    }
-    if (abilities.foodLevel <= 6) {
+    boolean preventWaterSprint = clientData.waterUpdate() && inWater && !isSwimming(user);
+    if (inventoryData.inventoryOpen() || abilities.foodLevel <= 6 || preventWaterSprint) {
       sprintingAllowed = false;
     }
   }
