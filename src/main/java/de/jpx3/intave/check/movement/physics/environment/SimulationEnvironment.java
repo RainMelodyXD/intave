@@ -2,6 +2,7 @@ package de.jpx3.intave.check.movement.physics.environment;
 
 import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.block.fluid.Fluid;
+import de.jpx3.intave.check.movement.physics.MoveMetric;
 import de.jpx3.intave.check.movement.physics.Pose;
 import de.jpx3.intave.check.movement.physics.Simulation;
 import de.jpx3.intave.player.collider.complex.ColliderResult;
@@ -172,23 +173,10 @@ public interface SimulationEnvironment {
   void setBeforeMoveColliderResult(ColliderResult result);
   ColliderResult beforeMoveColliderResult();
 
-  int afterRespawnTicks();
-  int pastAnyVelocity();
-  int pastExternalVelocity();
-  int pastNearbyCollisionInaccuracy();
-
-  void increaseFlyingPacketTicks();
-  void increaseEntityUseTicks();
-  void increasePlayerAttackTicks();
-  void increasePushedByWaterFlowTicks();
-  void resetPhysicsPacketRelinkFlyVL();
-
-  void increasePowderSnowTicks();
-  void resetPowderSnowTicks();
-
-  void increaseEdgeSneakTickGrants();
-  void increaseVehicleTicks();
-  void resetPushedByWaterFlowTicks();
+  int ticks(MoveMetric metric);
+  int ticksPast(MoveMetric metric);
+  void activeTick(MoveMetric metric);
+  void inactiveTick(MoveMetric metric);
 
   void updateEyesInWater();
   void aquaticUpdateLavaReset();

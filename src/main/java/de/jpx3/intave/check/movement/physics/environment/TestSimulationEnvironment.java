@@ -1,6 +1,7 @@
 package de.jpx3.intave.check.movement.physics.environment;
 
 import de.jpx3.intave.block.fluid.Fluid;
+import de.jpx3.intave.check.movement.physics.MoveMetric;
 import de.jpx3.intave.check.movement.physics.Pose;
 import de.jpx3.intave.check.movement.physics.Simulation;
 import de.jpx3.intave.player.collider.complex.ColliderResult;
@@ -9,6 +10,9 @@ import de.jpx3.intave.share.Motion;
 import de.jpx3.intave.share.Position;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
+
+import java.util.EnumMap;
+import java.util.Map;
 
 import static de.jpx3.intave.share.ClientMath.cos;
 import static de.jpx3.intave.share.ClientMath.sin;
@@ -42,6 +46,17 @@ public final class TestSimulationEnvironment implements SimulationEnvironment {
   private BoundingBox boundingBox = BoundingBox.fromBounds(0, 0, 0, 0, 0, 0);
 
   private Vector motionMultiplier;
+
+  private final Map<MoveMetric, Integer> activeTracker = new EnumMap<>(MoveMetric.class);
+  private final Map<MoveMetric, Integer> pastTracker = new EnumMap<>(MoveMetric.class);
+
+  {
+    for (MoveMetric value : MoveMetric.values()) {
+      activeTracker.put(value, value.activeDefault());
+      pastTracker.put(value, value.pastDefault());
+    }
+  }
+
 
   public void copyPositionToLastPosition() {
     lastPositionX = positionX;
@@ -502,77 +517,29 @@ public final class TestSimulationEnvironment implements SimulationEnvironment {
   }
 
   @Override
-  public int afterRespawnTicks() {
-    return 0;
+  public void activeTick(MoveMetric metric) {
+    activeTracker.put(metric, activeTracker.getOrDefault(metric, 0) + 1);
+    pastTracker.put(metric, 0);
   }
 
   @Override
-  public int pastAnyVelocity() {
-    return 100;
+  public void inactiveTick(MoveMetric metric) {
+    activeTracker.put(metric, 0);
+    pastTracker.put(metric, ticksPast(metric) + 1);
   }
 
   @Override
-  public int pastExternalVelocity() {
-    return 100;
+  public int ticks(MoveMetric metric) {
+    return activeTracker.getOrDefault(metric, 0);
   }
 
   @Override
-  public int pastNearbyCollisionInaccuracy() {
-    return 100;
-  }
-
-  @Override
-  public void increaseFlyingPacketTicks() {
-
-  }
-
-  @Override
-  public void increaseEntityUseTicks() {
-
-  }
-
-  @Override
-  public void increasePlayerAttackTicks() {
-
-  }
-
-  @Override
-  public void increasePushedByWaterFlowTicks() {
-
-  }
-
-  @Override
-  public void resetPushedByWaterFlowTicks() {
-
+  public int ticksPast(MoveMetric metric) {
+    return pastTracker.getOrDefault(metric, metric.pastDefault());
   }
 
   @Override
   public void updateEyesInWater() {
-
-  }
-
-  @Override
-  public void resetPhysicsPacketRelinkFlyVL() {
-
-  }
-
-  @Override
-  public void increasePowderSnowTicks() {
-
-  }
-
-  @Override
-  public void resetPowderSnowTicks() {
-
-  }
-
-  @Override
-  public void increaseEdgeSneakTickGrants() {
-
-  }
-
-  @Override
-  public void increaseVehicleTicks() {
 
   }
 

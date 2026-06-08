@@ -51,6 +51,9 @@ public final class ExamplePhysicsTest {
 					case "isChunkLoaded":
 					case "isChunkInUse":
 						return true;
+					case "isThundering":
+					case "hasStorm":
+						return false;
 					case "getWorldBorder":
 						return worldBorder;
 				}

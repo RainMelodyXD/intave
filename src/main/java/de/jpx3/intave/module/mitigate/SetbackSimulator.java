@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static de.jpx3.intave.check.movement.physics.MoveMetric.RECEIVED_VELOCITY_PACKET;
 import static de.jpx3.intave.math.MathHelper.minmax;
 import static de.jpx3.intave.share.ClientMath.floor;
 import static de.jpx3.intave.share.Direction.Axis.*;
@@ -106,7 +107,7 @@ public final class SetbackSimulator extends Module {
     boolean isOriginal = true;
 
     if (movementData.emulationVelocity != null) {
-      if (movementData.pastReceiveVelocityPacket < 2) {
+      if (movementData.ticksPast(RECEIVED_VELOCITY_PACKET) < 2) {
         motion = movementData.emulationVelocity;
         isOriginal = false;
       }
@@ -223,7 +224,7 @@ public final class SetbackSimulator extends Module {
     BoundingBox boundingBox = BoundingBox.fromPosition(user, movementData, futurePosition);
 
     Vector emulationVelocity = movementData.emulationVelocity;
-    if (emulationVelocity != null && movementData.pastReceiveVelocityPacket < 2) {
+    if (emulationVelocity != null && movementData.ticksPast(RECEIVED_VELOCITY_PACKET) < 2) {
       motion = motionProceed(emulationVelocity, user, boundingBox, true);
       movementData.emulationVelocity = null;
     } else {

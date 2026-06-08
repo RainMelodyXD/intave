@@ -15,10 +15,11 @@ public abstract class Simulator {
     MovementConfiguration config
   ) {
     metadata.stepHeight = stepHeight();
-    simulatePreTick(
-      user, null, metadata
-    );
     Motion motion = metadata.mutableBaseMotionCopy();
+    simulatePreTick(
+      user, motion, metadata
+    );
+    metadata.setBaseMotion(motion);
     metadata.refreshFriction(false);
     Simulation simulation = simulateTick(
       user, motion.copy(), metadata.unmodifiable(), config
@@ -58,8 +59,8 @@ public abstract class Simulator {
   public abstract void simulateAfterTick(
     User user,
     @Mutable SimulationEnvironment environment,
-    Position position,
-    Motion motion
+    @Immutable Position position,
+    @Mutable Motion motion
   );
 
   public abstract void setback(

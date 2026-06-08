@@ -164,7 +164,7 @@ public final class Raytracing {
     User user = UserRepository.userOf(player);
     Pose assumedPose = user.meta().movement().pose();
     boolean sneakUncertainty = user.meta().protocol().delayedSneak() &&
-      user.meta().movement().past(SNEAKING) <= 2 &&
+      user.meta().movement().ticksPast(SNEAKING) <= 2 &&
       assumedPose == Pose.STANDING;
 
     for (int i = 0; i < 2; i++) {

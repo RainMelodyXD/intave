@@ -32,6 +32,7 @@ import org.bukkit.util.Vector;
 
 import java.util.Collection;
 
+import static de.jpx3.intave.check.movement.physics.MoveMetric.*;
 import static de.jpx3.intave.share.ClientMath.clamp_double;
 import static de.jpx3.intave.share.ClientMath.floor;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_14;
@@ -44,7 +45,7 @@ class BaseSimulator extends Simulator {
   ) {
     handleSneakInWater(user, baseMotion, environment);
     updateAquatics(user, environment);
-    simulateMotionClamp(user);
+    simulateMotionClamp(user, baseMotion, environment);
   }
 
   private void handleSneakInWater(User user, Motion motion, SimulationEnvironment environment) {
@@ -72,34 +73,33 @@ class BaseSimulator extends Simulator {
   }
 
   private void updateInLava(User user, SimulationEnvironment environment) {
-    MovementMetadata movementData = user.meta().movement();
-    if (movementData.inLava()) {
-      movementData.pastLavaMovement = 0;
+    if (environment.inLava()) {
+      environment.activeTick(IN_LAVA);
     }
   }
 
   private void simulateMotionClamp(
-    User user
+    User user, Motion baseMotion,
+    SimulationEnvironment environment
   ) {
-    MovementMetadata movementData = user.meta().movement();
-    double resetMotion = movementData.resetMotion();
+    double resetMotion = environment.resetMotion();
 
     if (user.meta().protocol().newMotionClampLogic()) {
-      if (movementData.mutableBaseMotionCopy().horizontalLengthSqr() < 0.000009) {
-        movementData.baseMotionX = 0;
-        movementData.baseMotionZ = 0;
+      if (baseMotion.horizontalLengthSqr() < 0.000009) {
+        baseMotion.motionX = 0;
+        baseMotion.motionZ = 0;
       }
     } else {
-      if (Math.abs(movementData.baseMotionX) < resetMotion) {
-        movementData.baseMotionX = 0.0;
+      if (Math.abs(baseMotion.motionX) < resetMotion) {
+        baseMotion.motionX = 0.0;
       }
-      if (Math.abs(movementData.baseMotionZ) < resetMotion) {
-        movementData.baseMotionZ = 0.0;
+      if (Math.abs(baseMotion.motionZ) < resetMotion) {
+        baseMotion.motionZ = 0.0;
       }
     }
 
-    if (Math.abs(movementData.baseMotionY) < resetMotion) {
-      movementData.baseMotionY = 0.0;
+    if (Math.abs(baseMotion.motionY) < resetMotion) {
+      baseMotion.motionY = 0.0;
     }
   }
 
@@ -412,7 +412,7 @@ class BaseSimulator extends Simulator {
       }
     }
     if (interpolations != 0) {
-      movementData.resetFlyingPacketAccurate();
+      movementData.activeTick(FLYING_PACKET_ACCURATE);
     }
   }
 
@@ -437,10 +437,10 @@ class BaseSimulator extends Simulator {
   }
 
   void notePossibleFlyingPacket(User user, ColliderResult collisionResult) {
-    MovementMetadata movementData = user.meta().movement();
+    SimulationEnvironment movementData = user.meta().movement();
     Motion context = collisionResult.motion();
     if (flyingPacket(user, context.motionX, context.motionY, context.motionZ)) {
-      movementData.resetFlyingPacketAccurate();
+      movementData.activeTick(FLYING_PACKET_ACCURATE);
     }
   }
 
@@ -811,13 +811,13 @@ class BaseSimulator extends Simulator {
   public void setback(User user, SimulationEnvironment environment, double predictedX, double predictedY, double predictedZ) {
 //    MovementMetadata movement = user.meta().movement();
     ViolationMetadata violationMetadata = user.meta().violationLevel();
-    //    System.out.println("Past external velocity: " + movement.pastExternalVelocity);
+    //    System.out.println("Past external velocity: " + movement.past(EXTERNAL_VELOCITY));
     Vector emulationMotion = new Vector(predictedX, predictedY, predictedZ);
-    int setbackTicks = (environment.pastExternalVelocity() <= 8) ? 8 : ((violationMetadata.physicsVL > 50) ? 3 : 2);
+    int setbackTicks = (environment.ticksPast(EXTERNAL_VELOCITY) <= 8) ? 8 : ((violationMetadata.physicsVL > 50) ? 3 : 2);
     Modules.mitigate()
       .movement()
       .emulationSetBack(
-        user.player(), emulationMotion, setbackTicks, (environment.pastExternalVelocity() > 16)
+        user.player(), emulationMotion, setbackTicks, (environment.ticksPast(EXTERNAL_VELOCITY) > 16)
       );
   }
 }

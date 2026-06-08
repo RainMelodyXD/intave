@@ -23,7 +23,6 @@ import de.jpx3.intave.block.variant.BlockVariant;
 import de.jpx3.intave.check.CheckService;
 import de.jpx3.intave.check.movement.Physics;
 import de.jpx3.intave.check.movement.Timer;
-import de.jpx3.intave.check.movement.physics.MoveMetric;
 import de.jpx3.intave.check.movement.physics.Pose;
 import de.jpx3.intave.check.world.InteractionRaytrace;
 import de.jpx3.intave.executor.Synchronizer;
@@ -538,7 +537,7 @@ public final class MovementDispatcher extends Module {
       }
 
       // I have neither the time nor the energy for a proper fix
-      if (movementData.motion().length() > 0.5 && movementData.detachVehicleTicks < 2) {
+      if (movementData.motion().length() > 0.5 && movementData.ticksPast(VEHICLE_DETACHMENT) < 2) {
         movementData.setBaseMotionX(0);
         movementData.setBaseMotionY(0);
         movementData.setBaseMotionZ(0);
@@ -736,7 +735,7 @@ public final class MovementDispatcher extends Module {
     }
 
     if (!movement.isTeleportConfirmationPacket) {
-      movement.lastTeleport++;
+      movement.inactiveTick(TELEPORT);
     }
 
     movement.invalidMovement = false;
@@ -788,52 +787,67 @@ public final class MovementDispatcher extends Module {
 
     boolean flyingWithElytra = movement.elytraFlying;//movement.pose() == Pose.FALL_FLYING;
     if (flyingWithElytra) {
-      movement.pastElytraFlying = 0;
+      movement.activeTick(ELYTRA_FLYING);
     } else {
-      movement.pastElytraFlying++;
+      movement.inactiveTick(ELYTRA_FLYING);
     }
-    movement.trackMetric(MoveMetric.IN_WEB, movement.inWeb);
+    if (movement.inWeb) {
+      movement.activeTick(IN_WEB);
+    } else {
+      movement.inactiveTick(IN_WEB);
+    }
 
     if (inventoryData.inventoryOpen()) {
-      movement.pastInventoryOpen = 0;
+      movement.activeTick(INVENTORY_OPEN);
     } else {
-      movement.pastInventoryOpen++;
+      movement.inactiveTick(INVENTORY_OPEN);
     }
     if (movement.physicsJumped) {
       movement.lastJump = System.currentTimeMillis();
     }
-    movement.trackMetric(SNEAKING, movement.isSneaking());
+    if (movement.isSneaking()) {
+      movement.activeTick(SNEAKING);
+    } else {
+      movement.inactiveTick(SNEAKING);
+    }
     if (movement.ticks(SNEAKING) > 1) {
       movement.lastSneakingTimestamps = System.currentTimeMillis();
     }
-    movement.trackMetric(SPRINTING, movement.isSprinting());
+    if (movement.isSprinting()) {
+      movement.activeTick(SPRINTING);
+    } else {
+      movement.inactiveTick(SPRINTING);
+    }
     attack.attackPastTicks++;
-    movement.pastBlockPlacement++;
+    movement.inactiveTick(BLOCK_PLACEMENT);
     inventoryData.pastSlotSwitch++;
     inventoryData.pastHotBarSlotChange++;
     inventoryData.pastItemUsageTransition++;
-    movement.pastWaterMovement++;
-    movement.pastLavaMovement++;
-    movement.pastVelocity++;
-    movement.pastReceiveVelocityPacket++;
-    movement.pastStep++;
-    movement.pastEdgeSneak++;
-    movement.pastSprintChange++;
-    movement.trackMetric(IN_WATER, movement.inWater);
+    movement.inactiveTick(IN_LAVA);
+    movement.inactiveTick(VELOCITY);
+    movement.inactiveTick(RECEIVED_VELOCITY_PACKET);
+    movement.inactiveTick(STEP);
+    movement.inactiveTick(EDGE_SNEAKING);
+    movement.inactiveTick(SPRINT_CHANGE);
+    if (movement.inWater) {
+      movement.activeTick(IN_WATER);
+    } else {
+      movement.inactiveTick(IN_WATER);
+    }
     movement.reduceTicks = 0;
     movement.ignoredAttackReduce = false;
     if (hasMovement || hasRotation) {
-      movement.pastExternalVelocity++;
+      movement.inactiveTick(EXTERNAL_VELOCITY);
     }
-    movement.pastLongTeleport++;
+    movement.inactiveTick(LONG_TELEPORT);
     abilityData.ticksToLastHealthUpdate++;
     movement.physicsUnpredictableVelocityExpected = false;
     movement.step = false;
     movement.lastSprinting = movement.sprinting;
     movement.lastSneaking = movement.sneaking;
-    movement.fireworkRocketsTicks++;
-    movement.attachVehicleTicks++;
-    movement.detachVehicleTicks++;
+    movement.inactiveTick(FIREWORK_ROCKETS);
+    movement.inactiveTick(VEHICLE_ATTACHMENT);
+    movement.inactiveTick(VEHICLE_DETACHMENT);
 
     if (!inventoryData.handActive() && inventoryData.pastHandActiveTicks > 2) {
       movement.physicsEatingSlotSwitchVL = 0;
@@ -1086,7 +1100,7 @@ public final class MovementDispatcher extends Module {
         movementData.pendingVelocityPackets.decrementAndGet();
       });
 //      }
-      movementData.pastReceiveVelocityPacket = 0;
+      movementData.activeTick(RECEIVED_VELOCITY_PACKET);
     }
   }
 
@@ -1104,14 +1118,14 @@ public final class MovementDispatcher extends Module {
       movementData.baseMotionZ = velocity.getZ();
       movementData.lastVelocity = velocity.clone();
       if (!movementData.willReceiveSetbackVelocity && !movementData.willReceiveFinalSetbackVelocity) {
-        movementData.pastExternalVelocity = 0;
+        movementData.activeTick(EXTERNAL_VELOCITY);
       }
       movementData.willReceiveSetbackVelocity = false;
       movementData.willReceiveFinalSetbackVelocity = false;
       PacketLogging logging = Modules.tracker().packetLogging();
       logging.logSystemMessage(user, () -> "MOTION LOGIC: Velocity base motion set to " + MathHelper.formatMotion(velocity));
     }
-    movementData.pastVelocity = 0;
+    movementData.activeTick(VELOCITY);
 //    movementData.pendingVelocityPackets.decrementAndGet();
   }
 
@@ -1336,7 +1350,7 @@ public final class MovementDispatcher extends Module {
     if (System.currentTimeMillis() - punishmentData.timeLastSneakToggleCancel < 2000) {
       cancelable.setCancelled(true);
     }
-    movementData.pastVehicleExitTicks = 0;
+    movementData.activeTick(VEHICLE_EXIT);
     if (movementData.isInVehicle()) {
       movementData.dismountRidingEntity("Sneak exit");
       movementData.sneaking = false;

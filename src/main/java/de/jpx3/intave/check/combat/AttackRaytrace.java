@@ -53,6 +53,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import static com.comphenix.protocol.wrappers.EnumWrappers.EntityUseAction.ATTACK;
+import static de.jpx3.intave.check.movement.physics.MoveMetric.TELEPORT;
 import static de.jpx3.intave.math.MathHelper.formatDouble;
 import static de.jpx3.intave.module.linker.packet.ListenerPriority.LOW;
 import static de.jpx3.intave.module.linker.packet.ListenerPriority.NORMAL;
@@ -145,7 +146,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         player.sendMessage(ChatColor.RED + "Distance " + formatDouble(distance, 12));
       }
 
-      boolean inTeleport = movement.lastTeleport == 0 || violationMeta.isInActiveTeleportBundle;
+      boolean inTeleport = movement.ticksPast(TELEPORT) == 0 || violationMeta.isInActiveTeleportBundle;
       boolean firstRaytraceSuccessful = false;
       if (!inTeleport && !entityInTimeout(user, entity, entity.pendingFeedbackPackets())) {
         // Make a first attempt at ray-tracing to enhance player experience
@@ -266,7 +267,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
     List<Action> pendingAttacks = meta.queuedActions;
     PacketContainer packet = event.getPacket();
     // Clear attacks if recently teleported
-    if (movement.lastTeleport <= 1 || movement.awaitTeleport) {
+    if (movement.ticksPast(TELEPORT) <= 1 || movement.awaitTeleport) {
       pendingAttacks.clear();
     }
     // Apply flying packets (first boolean)

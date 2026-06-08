@@ -9,6 +9,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import static de.jpx3.intave.check.movement.physics.MoveMetric.WATERFLOW_PUSH;
+
 final class v8Waterflow implements FluidFlow {
   @Override
   public boolean applyFlowTo(User user, BoundingBox boundingBox) {
@@ -49,7 +51,7 @@ final class v8Waterflow implements FluidFlow {
       movementData.baseMotionX += flowVector.motionX * factor;
       movementData.baseMotionY += flowVector.motionY * factor;
       movementData.baseMotionZ += flowVector.motionZ * factor;
-      movementData.pastPushedByWaterFlow = 0;
+      movementData.activeTick(WATERFLOW_PUSH);
     }
     return inWater;
   }

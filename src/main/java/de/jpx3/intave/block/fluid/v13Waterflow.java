@@ -11,6 +11,7 @@ import de.jpx3.intave.user.meta.MovementMetadata;
 import org.bukkit.Material;
 import org.bukkit.World;
 
+import static de.jpx3.intave.check.movement.physics.MoveMetric.WATERFLOW_PUSH;
 import static de.jpx3.intave.share.ClientMath.ceil;
 import static de.jpx3.intave.share.ClientMath.floor;
 
@@ -74,7 +75,7 @@ final class v13Waterflow implements FluidFlow {
       movementData.baseMotionY += waterFlowTotal.motionY;
       movementData.baseMotionZ += waterFlowTotal.motionZ;
 
-      movementData.pastPushedByWaterFlow = 0;
+      movementData.activeTick(WATERFLOW_PUSH);
     }
     return inWater;
   }
